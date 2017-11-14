@@ -34,7 +34,7 @@ from threading import Condition, Event, Thread
 
 NAILGUN_VERSION = '0.9.0'
 BUFSIZE = 2048
-NAILGUN_PORT_DEFAULT = 2113
+NAILGUN_PORT_DEFAULT = 8212
 CHUNK_HEADER_LEN = 5
 
 CHUNKTYPE_STDIN = '0'
@@ -787,6 +787,9 @@ def main():
     default_nailgun_port = int(os.environ.get('NAILGUN_PORT', NAILGUN_PORT_DEFAULT))
 
     parser = optparse.OptionParser(usage='%prog [options] cmd arg1 arg2 ...')
+    # +++ a/bloop
+    parser.disable_interspersed_args()
+    # --- b/bloop
     parser.add_option('--nailgun-server', default=default_nailgun_server)
     parser.add_option('--nailgun-port', type='int', default=default_nailgun_port)
     parser.add_option('--nailgun-filearg')
