@@ -1,6 +1,4 @@
-/nailgun-server/target/
-/nailgun-examples/target/
-/target/
+target/
 ng
 *.iml
 *.pyc
