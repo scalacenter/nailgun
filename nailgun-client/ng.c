@@ -80,7 +80,7 @@
 
 #define NAILGUN_CLIENT_NAME_EXE "ng.exe"
 
-#define NAILGUN_PORT_DEFAULT "2113"
+#define NAILGUN_PORT_DEFAULT "8212"
 #define NAILGUN_CLIENT_NAME "ng"
 #define CHUNK_HEADER_LEN (5)
 
@@ -640,7 +640,7 @@ void usage(int exitcode) {
   fprintf(stderr, "                               if set, otherwise localhost)\n");
   fprintf(stderr, "   --nailgun-port              to specify the port of the nailgun server\n");
   fprintf(stderr, "                               (default is NAILGUN_PORT environment variable\n");
-  fprintf(stderr, "                               if set, otherwise 2113)\n");
+  fprintf(stderr, "                               if set, otherwise 8212)\n");
   fprintf(stderr, "   --nailgun-filearg FILE      places the entire contents of FILE into the\n");
   fprintf(stderr, "                               next argument, which is interpreted as a string\n");
   fprintf(stderr, "                               using the server's default character set.  May be\n");
