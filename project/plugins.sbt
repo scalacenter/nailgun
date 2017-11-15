@@ -1,2 +1,2 @@
-val SbtPomReader = RootProject(uri("git://github.com/sbt/sbt-pom-reader#555125e54b6035fd5df0dcdda18e8d31bcdbefec"))
+val SbtPomReader = RootProject(uri("git://github.com/scalacenter/sbt-pom-reader#e5338649ba278173e26c38cfd4dea5270c15346c"))
 dependsOn(ProjectRef(SbtPomReader.build, "sbt-pom-reader"))
