@@ -1,3 +1,2 @@
-val SbtPomReader = RootProject(uri("git://github.com/scalacenter/sbt-pom-reader#2a6ebd37af79b6d9c295876aa611b722ea7dcfd4"))
+val SbtPomReader = RootProject(uri("git://github.com/scalacenter/sbt-pom-reader#a9a775d019119d67559482b690481d46c7104a8c"))
 dependsOn(ProjectRef(SbtPomReader.build, "sbt-pom-reader"))
-addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0")
