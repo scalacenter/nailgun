@@ -2,3 +2,4 @@ val SbtPomReader = RootProject(uri("git://github.com/scalacenter/sbt-pom-reader#
 dependsOn(ProjectRef(SbtPomReader.build, "sbt-pom-reader"))
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-release-early" % "2.0.1")
