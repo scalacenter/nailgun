@@ -26,6 +26,14 @@ object BloopPluginImplementation {
 
   private final val ThisRepo = GitHub("scalacenter", "bloop")
   val globalSettings: Seq[Def.Setting[_]] = List(
+    PgpKeys.pgpPublicRing := {
+      if (Keys.insideCI.value) file("/drone/.gnupg/pubring.asc")
+      else PgpKeys.pgpPublicRing.value
+    },
+    PgpKeys.pgpSecretRing := {
+      if (Keys.insideCI.value) file("/drone/.gnupg/secring.asc")
+      else PgpKeys.pgpPublicRing.value
+    },
     Keys.startYear := Some(2017),
     Keys.autoAPIMappings := true,
     Keys.publishMavenStyle := true,
