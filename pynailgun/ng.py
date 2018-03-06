@@ -1020,6 +1020,9 @@ def main():
             sys.exit(exit_code)
     except NailgunException as e:
         sys.stderr.write(str(e))
+        if "Could not connect to" in str(e):
+            sys.stderr.write("Have you forgotten to start bloop's server?")
+            sys.stderr.write("Check our usage instructions in https://scalacenter.github.io/bloop/")
         sys.exit(e.code)
     except KeyboardInterrupt as e:
         pass
