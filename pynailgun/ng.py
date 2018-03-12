@@ -908,6 +908,10 @@ def main():
                 options.nailgun_server,
                 server_port=options.nailgun_port) as c:
             exit_code = c.send_command(cmd, cmd_args, options.nailgun_filearg)
+
+            if cmd_args == "help":
+                sys.stdout.write("To display Nailgun's help, use `--nailgun-help`.\n")
+
             sys.exit(exit_code)
     except NailgunException as e:
         sys.stderr.write(str(e))
