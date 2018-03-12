@@ -877,7 +877,7 @@ def main():
     default_nailgun_server = os.environ.get('NAILGUN_SERVER', '127.0.0.1')
     default_nailgun_port = int(os.environ.get('NAILGUN_PORT', NAILGUN_PORT_DEFAULT))
 
-    parser = optparse.OptionParser(usage='%prog [options] cmd arg1 arg2 ...')
+    parser = optparse.OptionParser(add_help_option=False, usage='%prog [options] cmd arg1 arg2 ...')
     # +++ a/bloop
     parser.disable_interspersed_args()
     # --- b/bloop
@@ -886,6 +886,7 @@ def main():
     parser.add_option('--nailgun-filearg')
     parser.add_option('--nailgun-showversion', action='store_true')
     parser.add_option('--nailgun-help', action='help')
+    parser.add_option('-h', '--help', action='store_true', dest='help_set')
     (options, args) = parser.parse_args()
 
     if options.nailgun_showversion:
@@ -896,14 +897,21 @@ def main():
     else:
         cmd = os.path.basename(sys.argv[0])
 
-    # Pass any remaining command line arguments to the server.
-    cmd_args = args
+    if options.help_set and not args:
+        cmd_args = "help"
+    else:
+        # Pass any remaining command line arguments to the server.
+        cmd_args = args
 
     try:
         with NailgunConnection(
                 options.nailgun_server,
                 server_port=options.nailgun_port) as c:
             exit_code = c.send_command(cmd, cmd_args, options.nailgun_filearg)
+
+            if cmd_args == "help":
+                sys.stdout.write("To display Nailgun's help, use `--nailgun-help`.\n")
+
             sys.exit(exit_code)
     except NailgunException as e:
         sys.stderr.write(str(e))
