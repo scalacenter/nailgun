@@ -916,6 +916,7 @@ def main():
     except NailgunException as e:
         sys.stderr.write(str(e))
         if "Could not connect to" in str(e):
+            sys.stderr.write("\n")
             sys.stderr.write("Have you forgotten to start bloop's server?\n")
             sys.stderr.write("Check our usage instructions in https://scalacenter.github.io/bloop/\n")
         sys.exit(e.code)
