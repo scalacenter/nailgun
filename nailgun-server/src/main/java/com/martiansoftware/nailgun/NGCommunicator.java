@@ -324,30 +324,38 @@ public class NGCommunicator implements Closeable {
      * chunk type is encountered.
      */
     private byte readChunk() throws IOException {
-        int chunkLen = in.readInt();
-        byte chunkType = in.readByte();
+        try {
+            int chunkLen = in.readInt();
+            byte chunkType = in.readByte();
 
-        switch (chunkType) {
-            case NGConstants.CHUNKTYPE_STDIN:
-                LOG.log(Level.FINEST, "Got stdin chunk, len {0}", chunkLen);
-                InputStream chunkStream = readPayload(in, chunkLen);
-                setInput(chunkStream, chunkLen);
-                break;
+            switch (chunkType) {
+                case NGConstants.CHUNKTYPE_STDIN:
+                    LOG.log(Level.FINEST, "Got stdin chunk, len {0}", chunkLen);
+                    InputStream chunkStream = readPayload(in, chunkLen);
+                    setInput(chunkStream, chunkLen);
+                    break;
 
-            case NGConstants.CHUNKTYPE_STDIN_EOF:
-                LOG.log(Level.FINEST, "Got stdin closed chunk");
-                setEof();
-                break;
+                case NGConstants.CHUNKTYPE_STDIN_EOF:
+                    LOG.log(Level.FINEST, "Got stdin closed chunk");
+                    setEof();
+                    break;
 
-            case NGConstants.CHUNKTYPE_HEARTBEAT:
-                LOG.log(Level.FINEST, "Got client heartbeat");
-                break;
+                case NGConstants.CHUNKTYPE_HEARTBEAT:
+                    LOG.log(Level.FINEST, "Got client heartbeat");
+                    break;
 
-            default:
-                LOG.log(Level.WARNING, "Unknown chunk type: {0}", (char) chunkType);
-                throw new IOException("Unknown stream type: " + (char) chunkType);
+                default:
+                    LOG.log(Level.WARNING, "Unknown chunk type: {0}", (char) chunkType);
+                    throw new IOException("Unknown stream type: " + (char) chunkType);
+            }
+            return chunkType;
+        } catch (java.net.SocketException socketException) {
+            if (eof) {
+                return NGConstants.CHUNKTYPE_STDIN_EOF;
+            } else {
+                throw socketException;
+            }
         }
-        return chunkType;
     }
 
     private void setInput(InputStream chunkStream, int chunkLen) throws IOException {
