@@ -25,6 +25,7 @@ import socket
 import struct
 import sys
 from threading import Condition, Event, Thread, RLock
+from subprocess import CalledProcessError, check_call
 
 is_py2 = sys.version[0] == "2"
 if is_py2:
@@ -1000,6 +1001,7 @@ def main():
     parser.add_option("--nailgun-showversion", action="store_true")
     parser.add_option("--nailgun-help", action="help")
     parser.add_option('-h', '--help', action='store_true', dest='help_set')
+    parser.add_option('--server-location', type='string', dest='server_location')
     (options, args) = parser.parse_args()
 
     if options.nailgun_showversion:
@@ -1011,10 +1013,32 @@ def main():
         cmd = os.path.basename(sys.argv[0])
 
     if options.help_set and not args:
-        cmd_args = "help"
+        cmd = "help"
+        cmd_args = []
     else:
         # Pass any remaining command line arguments to the server.
         cmd_args = args
+
+    if cmd == "server":
+        basedir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        server_location = os.path.join(basedir, "blp-server")
+        if not os.path.isfile(server_location):
+            if options.server_location:
+                server_location = options.server_location
+            else:
+                print("Bloop server could not be located in %s." % server_location)
+                print("Pass in the location with `--server-location` before the `server` command.")
+                sys.exit(1)
+
+        try:
+            check_call(["java", "-jar", server_location])
+        except CalledProcessError as e:
+            print("Bloop server in %s failed to run." % target)
+            print("Command: %s" % e.cmd)
+            print("Return code: %d" % e.returncode)
+            sys.exit(e.returncode)
+        except KeyboardInterrupt as e:
+            sys.exit(0)
 
     try:
         with NailgunConnection(
@@ -1022,15 +1046,15 @@ def main():
         ) as c:
             exit_code = c.send_command(cmd, cmd_args, options.nailgun_filearg)
 
-            if cmd_args == "help":
-                sys.stdout.write("To display Nailgun's help, use `--nailgun-help`.\n")
-
             sys.exit(exit_code)
     except NailgunException as e:
         sys.stderr.write(str(e))
         if "Could not connect to" in str(e):
-            sys.stderr.write("\nHave you forgotten to start bloop's server?\n")
+            sys.stderr.write("\n\n")
+            sys.stderr.write("Have you forgotten to start bloop's server? Run it with `bloop server`.\n")
             sys.stderr.write("Check our usage instructions in https://scalacenter.github.io/bloop/\n")
+            if cmd == "help":
+                sys.stdout.write("To display Nailgun's help, use `--nailgun-help`.\n")
         sys.exit(e.code)
     except KeyboardInterrupt as e:
         pass
