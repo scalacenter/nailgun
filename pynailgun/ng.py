@@ -920,7 +920,7 @@ def main():
         try:
             check_call(["java", "-jar", server_location])
         except CalledProcessError as e:
-            print("Bloop server in %s failed to run." % target)
+            print("Bloop server in %s failed to run." % server_location)
             print("Command: %s" % e.cmd)
             print("Return code: %d" % e.returncode)
             sys.exit(e.returncode)
@@ -933,6 +933,9 @@ def main():
                 server_port=options.nailgun_port) as c:
             exit_code = c.send_command(cmd, cmd_args, options.nailgun_filearg)
 
+            if cmd == "help":
+                sys.stdout.write("Type `--nailgun-help` for help on the Nailgun CLI tool.\n")
+
             sys.exit(exit_code)
     except NailgunException as e:
         sys.stderr.write(str(e))
@@ -940,8 +943,9 @@ def main():
             sys.stderr.write("\n\n")
             sys.stderr.write("Have you forgotten to start bloop's server? Run it with `bloop server`.\n")
             sys.stderr.write("Check our usage instructions in https://scalacenter.github.io/bloop/\n")
+
             if cmd == "help":
-                sys.stdout.write("To display Nailgun's help, use `--nailgun-help`.\n")
+                sys.stdout.write("Type `--nailgun-help` for help on the Nailgun CLI tool.\n")
         sys.exit(e.code)
     except KeyboardInterrupt as e:
         pass
