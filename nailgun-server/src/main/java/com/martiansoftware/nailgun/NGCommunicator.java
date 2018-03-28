@@ -34,7 +34,7 @@ import java.util.logging.Logger;
  */
 public class NGCommunicator implements Closeable {
 
-    private static final Logger LOG = Logger.getLogger(NGCommunicator.class.getName());
+    static final Logger LOG = Logger.getLogger(NGCommunicator.class.getName());
     private final ExecutorService orchestratorExecutor;
     private final ExecutorService readExecutor;
     private final DataInputStream in;
