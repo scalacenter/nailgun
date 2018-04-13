@@ -17,6 +17,9 @@
  */
 package com.martiansoftware.nailgun;
 
+import com.martiansoftware.nailgun.builtins.DefaultNail;
+import com.sun.jna.Platform;
+
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
@@ -26,9 +29,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.martiansoftware.nailgun.builtins.DefaultNail;
-import com.sun.jna.Platform;
 
 /**
  * <p>Listens for new connections from NailGun clients and launches NGSession
@@ -329,7 +329,8 @@ public class NGServer implements Runnable {
         System.setOut(out);
         System.setErr(err);
 
-        System.setSecurityManager(originalSecurityManager);
+        // Security manager is always disabled
+        //System.setSecurityManager(originalSecurityManager);
 
         if (exitVM) {
             System.exit(0);
@@ -363,10 +364,11 @@ public class NGServer implements Runnable {
         NGSession sessionOnDeck = null;
 
         originalSecurityManager = System.getSecurityManager();
-        System.setSecurityManager(
-                new NGSecurityManager(
-                originalSecurityManager));
 
+        // Remove overhead of security manager https://github.com/facebook/nailgun/issues/134
+        //System.setSecurityManager(
+        //        new NGSecurityManager(
+        //        originalSecurityManager));
 
         synchronized (System.in) {
             if (!(System.in instanceof ThreadLocalInputStream)) {
