@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 public class NGSession extends Thread {
 
-    private static final Logger LOG = Logger.getLogger(NGSession.class.getName());
+    static final Logger LOG = Logger.getLogger(NGSession.class.getName());
 
     /**
      * The server this NGSession is working for

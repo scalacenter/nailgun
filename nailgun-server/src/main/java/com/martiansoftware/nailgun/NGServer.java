@@ -29,6 +29,7 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 /**
  * <p>Listens for new connections from NailGun clients and launches NGSession
@@ -172,6 +173,10 @@ public class NGServer implements Runnable {
      */
     public NGServer(NGListeningAddress listeningAddress, int sessionPoolSize, int timeoutMillis) {
         this.listeningAddress = listeningAddress;
+
+        // Initialize logs in session and communicator so that they pick up the right streams
+        NGSession.LOG.log(Level.FINEST, "Initializing static log in ng session.");
+        NGCommunicator.LOG.log(Level.FINEST, "Initializing static log in ng communicator");
 
         aliasManager = new AliasManager();
         allNailStats = new java.util.HashMap();
