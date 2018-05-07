@@ -918,7 +918,7 @@ def main():
                 sys.exit(1)
 
         try:
-            check_call(["java", "-jar", server_location])
+            check_call(["java", "-jar", server_location] + cmd_args)
         except CalledProcessError as e:
             print("Bloop server in %s failed to run." % server_location)
             print("Command: %s" % e.cmd)
