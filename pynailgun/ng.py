@@ -600,6 +600,7 @@ class NailgunConnection(object):
             bytes_received = self.transport.recv_into(self.buf, bytes_to_read)
             if dest_file:
                 dest_file.write(bytes_to_str(self.buf[:bytes_received]))
+                dest_file.flush()
             bytes_read += bytes_received
 
     def _recv_to_buffer(self, num_bytes, buf):
