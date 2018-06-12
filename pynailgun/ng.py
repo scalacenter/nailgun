@@ -569,6 +569,7 @@ class NailgunConnection(object):
             if dest_file:
                 data = self.buf[:bytes_received].decode("utf-8")
                 dest_file.write(data)
+                dest_file.flush()
             bytes_read += bytes_received
 
 
