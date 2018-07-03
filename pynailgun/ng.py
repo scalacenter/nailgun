@@ -774,7 +774,10 @@ elif platform.system() == "Windows":
 
     monotonic_time_nanos = _monotonic_time_nanos_windows
 elif sys.platform == "cygwin":
-    k32 = ctypes.CDLL("Kernel32", use_errno=True)
+    try:
+        k32 = ctypes.CDLL("Kernel32", use_errno=True)
+    except OSError:
+        k32 = ctypes.CDLL("Kernel32.dll", use_errno=True)
     perf_frequency = ctypes.c_uint64()
     k32.QueryPerformanceFrequency(ctypes.byref(perf_frequency))
 
