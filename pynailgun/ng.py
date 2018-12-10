@@ -1035,16 +1035,16 @@ def main():
                 sys.exit(1)
 
         try:
+            # Works in Windows and installations that have a jar instead of a script
+            print("Running " + server_location + " as a jar...")
             java_cmd = ["java"] + cmd_args + ["-jar", server_location]
             check_call(java_cmd)
         except CalledProcessError as e:
-            # The binary may be executable directly under certain package managers such as Nix
-            # Try running it without `java` and ignore previous error if so
+            # Works in systems such as Mac OS or Nix that in which blp-server is a script
             try:
-                if cmd_args:
-                    print("Java arguments are ignored, " + server_location + " deemed to be a binary instead of a jar.")
-                check_call([server_location])
-            except CallProcessError as e2:
+                print("Running " + server_location + " as a script...")
+                check_call(["sh", server_location] + cmd_args)
+            except CalledProcessError as e2:
                 print("Bloop server in %s failed to run." % server_location)
                 print("First invocation attempt: %s" % e.cmd)
                 print("-> Return code: %d" % e.returncode)
