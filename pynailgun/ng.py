@@ -1038,10 +1038,11 @@ def main():
         # Read jvm options from the .jvmopts file
         jvmopts_file = os.path.join(basedir, ".jvmopts")
         jvm_options_from_file = []
-        with open(jvmopts_file, "r") as jvmopts:
-            lines = jvmopts.readlines()
-            for line in lines:
-                jvm_options_from_file.append(line)
+        if os.path.isfile(jvmopts_file):
+            with open(jvmopts_file, "r") as jvmopts:
+                lines = jvmopts.readlines()
+                for line in lines:
+                    jvm_options_from_file.append(line)
 
         try:
             jvm_options = jvm_options_from_file
