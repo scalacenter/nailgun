@@ -1056,7 +1056,7 @@ def main():
             # Works in Windows and installations that have a jar instead of a script
             print("Running " + server_location + " as a jar...")
             java_cmd = ["java"] + jvm_options + ["-jar", server_location] + server_args
-            print("Shelling out with " + java_cmd)
+            print("Shelling out with '" + str(java_cmd) + "' ...")
             check_call(java_cmd)
         except CalledProcessError as e:
             # Works in systems such as Mac OS or Nix that in which blp-server is a script
@@ -1070,11 +1070,11 @@ def main():
                 print("Running " + server_location + " as a script...")
                 if platform.system() == "Windows":
                     cmd = ["cmd.exe", "/C", server_location] + script_args
-                    print("Shelling out in Windows with " + cmd)
+                    print("Shelling out in Windows with " + str(cmd))
                     check_call(cmd)
                 else:
                     cmd = ["sh", server_location] + script_args
-                    print("Shelling out in Unix system with " + cmd)
+                    print("Shelling out in Unix system with " + str(cmd))
                     check_call(cmd)
             except CalledProcessError as e2:
                 print("Bloop server in %s failed to run." % server_location)
