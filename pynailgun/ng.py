@@ -1040,7 +1040,7 @@ def main():
         jvm_options_from_file = []
         if os.path.isfile(jvmopts_file):
             with open(jvmopts_file, "r") as jvmopts:
-                lines = jvmopts.readlines()
+                lines = jvmopts.read().splitlines()
                 for line in lines:
                     jvm_options_from_file.append(line)
 
