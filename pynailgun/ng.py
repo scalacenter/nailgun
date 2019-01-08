@@ -1025,7 +1025,7 @@ def main():
 
     if cmd == "server":
         print("Starting the bloop server... this may take a few seconds")
-        basedir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
         server_location = os.path.join(basedir, "blp-server")
         if not os.path.isfile(server_location):
             if options.server_location:
