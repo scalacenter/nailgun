@@ -1044,7 +1044,7 @@ def main():
                 print("Questions? Reach us at https://gitter.im/scalacenter/bloop")
                 sys.exit(exit_code)
         except NailgunException as e:
-            print("There is no server running at port " + default_nailgun_port)
+            print("There is no server running at port " + str(default_nailgun_port))
             print("Starting the bloop server... this may take a few seconds")
             basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
             server_location = os.path.join(basedir, "blp-server")
