@@ -25,7 +25,7 @@ import socket
 import struct
 import sys
 from threading import Condition, Event, Thread, RLock
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, check_call
 
 is_py2 = sys.version[0] == "2"
 if is_py2:
@@ -1078,7 +1078,7 @@ def main():
                 print("Running " + server_location + " as a jar...")
                 java_cmd = ["java"] + jvm_options + ["-jar", server_location] + server_args
                 print("Shelling out with '" + str(java_cmd) + "' ...")
-                check_output(java_cmd)
+                check_call(java_cmd)
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
                 try:
