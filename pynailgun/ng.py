@@ -25,7 +25,7 @@ import socket
 import struct
 import sys
 from threading import Condition, Event, Thread, RLock
-from subprocess import CalledProcessError, check_call
+from subprocess import CalledProcessError, check_output
 
 is_py2 = sys.version[0] == "2"
 if is_py2:
@@ -1027,69 +1027,87 @@ def main():
         cmd_args = args
 
     if cmd == "server":
-        print("Starting the bloop server... this may take a few seconds")
-        basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
-        server_location = os.path.join(basedir, "blp-server")
-        if not os.path.isfile(server_location):
-            if options.server_location:
-                server_location = options.server_location
-            else:
-                print("Bloop server could not be located in %s." % server_location)
-                print("Pass in the location with `--server-location` before the `server` command.")
-                sys.exit(1)
-
-        # Read jvm options from the .jvmopts file
-        jvmopts_file = os.path.join(basedir, ".jvmopts")
-        jvm_options_from_file = []
-        if os.path.isfile(jvmopts_file):
-            with open(jvmopts_file, "r") as jvmopts:
-                lines = jvmopts.read().splitlines()
-                for line in lines:
-                    jvm_options_from_file.append(line)
-
         try:
-            jvm_options = jvm_options_from_file
-            server_args = []
-            for arg in cmd_args:
-                if arg.startswith("-J"):
-                    jvm_options.append(arg)
+            with NailgunConnection(
+                options.nailgun_server, server_port=options.nailgun_port
+            ) as c:
+                print("Check if server is alive or not...")
+                exit_code = c.send_command("about", filearg=options.nailgun_filearg)
+                print("-------------------------------------------------------------------")
+                print("A bloop server is already running in port " + str(default_nailgun_port) + ".")
+                print("")
+                print("  - Do you want to spawn a bloop server in another port?")
+                print("      Run `bloop server $NAILGUN_PORT`.")
+                print("  - Do you want to kill the running server?")
+                print("      Run `bloop ng-stop --nailgun-port $NAILGUN_PORT` or `bloop ng-stop` for short.")
+                print("")
+                print("Questions? Reach us at https://gitter.im/scalacenter/bloop")
+                sys.exit(exit_code)
+        except NailgunException as e:
+            print("There is no server running at port " + default_nailgun_port)
+            print("Starting the bloop server... this may take a few seconds")
+            basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+            server_location = os.path.join(basedir, "blp-server")
+            if not os.path.isfile(server_location):
+                if options.server_location:
+                    server_location = options.server_location
                 else:
-                    server_args.append(arg)
+                    print("Bloop server could not be located in %s." % server_location)
+                    print("Pass in the location with `--server-location` before the `server` command.")
+                    sys.exit(1)
 
-            # Works in Windows and installations that have a jar instead of a script
-            print("Running " + server_location + " as a jar...")
-            java_cmd = ["java"] + jvm_options + ["-jar", server_location] + server_args
-            print("Shelling out with '" + str(java_cmd) + "' ...")
-            check_call(java_cmd)
-        except CalledProcessError as e:
-            # Works in systems such as Mac OS or Nix that in which blp-server is a script
+            # Read jvm options from the .jvmopts file
+            jvmopts_file = os.path.join(basedir, ".jvmopts")
+            jvm_options_from_file = []
+            if os.path.isfile(jvmopts_file):
+                with open(jvmopts_file, "r") as jvmopts:
+                    lines = jvmopts.read().splitlines()
+                    for line in lines:
+                        jvm_options_from_file.append(line)
+
             try:
-                # Pass the full cmd_args to the script
-                script_args = []
-                for jvm_option_from_file in jvm_options_from_file:
-                    script_args.append("-J" + jvm_option_from_file)
-                script_args = script_args + cmd_args
+                jvm_options = jvm_options_from_file
+                server_args = []
+                for arg in cmd_args:
+                    if arg.startswith("-J"):
+                        jvm_options.append(arg)
+                    else:
+                        server_args.append(arg)
 
-                print("Running " + server_location + " as a script...")
-                if platform.system() == "Windows":
-                    cmd = ["cmd.exe", "/C", server_location] + script_args
-                    print("Shelling out in Windows with " + str(cmd))
-                    check_call(cmd)
-                else:
-                    cmd = ["sh", server_location] + script_args
-                    print("Shelling out in Unix system with " + str(cmd))
-                    check_call(cmd)
-            except CalledProcessError as e2:
-                print("Bloop server in %s failed to run." % server_location)
-                print("First invocation attempt: %s" % e.cmd)
-                print("-> Return code: %d" % e.returncode)
-                print("Second invocation attempt: %s" % e2.cmd)
-                print("-> Return code: %d" % e2.returncode)
+                # Works in Windows and installations that have a jar instead of a script
+                print("Running " + server_location + " as a jar...")
+                java_cmd = ["java"] + jvm_options + ["-jar", server_location] + server_args
+                print("Shelling out with '" + str(java_cmd) + "' ...")
+                check_output(java_cmd)
+            except CalledProcessError as e:
+                # Works in systems such as Mac OS or Nix that in which blp-server is a script
+                try:
+                    # Pass the full cmd_args to the script
+                    script_args = []
+                    for jvm_option_from_file in jvm_options_from_file:
+                        script_args.append("-J" + jvm_option_from_file)
+                    script_args = script_args + cmd_args
 
-                # Only use the return code of the first attempt
-                sys.exit(e.returncode)
-        except KeyboardInterrupt as e:
-            sys.exit(0)
+                    print("Running " + server_location + " as a script...")
+                    if platform.system() == "Windows":
+                        cmd = ["cmd.exe", "/C", server_location] + script_args
+                        print("Shelling out in Windows with " + str(cmd))
+                        check_call(cmd)
+                    else:
+                        cmd = ["sh", server_location] + script_args
+                        print("Shelling out in Unix system with " + str(cmd))
+                        check_call(cmd)
+                except CalledProcessError as e2:
+                    print("Bloop server in %s failed to run." % server_location)
+                    print("First invocation attempt: %s" % e.cmd)
+                    print("-> Return code: %d" % e.returncode)
+                    print("Second invocation attempt: %s" % e2.cmd)
+                    print("-> Return code: %d" % e2.returncode)
+
+                    # Only use the return code of the first attempt
+                    sys.exit(e.returncode)
+            except KeyboardInterrupt as e:
+                sys.exit(0)
 
     try:
         with NailgunConnection(
