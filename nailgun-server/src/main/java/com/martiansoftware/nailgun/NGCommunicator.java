@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class NGCommunicator implements Closeable {
 
-    private static final Logger LOG = Logger.getLogger(NGCommunicator.class.getName());
+    private Logger LOG;
     private final ExecutorService orchestratorExecutor;
     private final ExecutorService readExecutor;
     private final Socket socket;
@@ -67,8 +67,10 @@ public class NGCommunicator implements Closeable {
      */
     NGCommunicator(
         Socket socket,
-        final int heartbeatTimeoutMillis) throws IOException {
+        final int heartbeatTimeoutMillis,
+        Logger log) throws IOException {
 
+        this.LOG = log;
         this.heartbeatTimeoutMillis = heartbeatTimeoutMillis;
         this.socket = socket;
         in = new DataInputStream(socket.getInputStream());
@@ -395,7 +397,7 @@ public class NGCommunicator implements Closeable {
         socket.close();
     }
 
-    private static void terminateExecutor(ExecutorService service, String which) {
+    private void terminateExecutor(ExecutorService service, String which) {
         LOG.log(Level.FINE, "Shutting down {0} ExecutorService", which);
         service.shutdown();
 

@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  */
 public class NGSession extends Thread {
 
-    private static final Logger LOG = Logger.getLogger(NGSession.class.getName());
+    private Logger LOG;
 
     /**
      * The server this NGSession is working for
@@ -105,8 +105,9 @@ public class NGSession extends Thread {
      * @param sessionPool The NGSessionPool we're working for
      * @param server The NGServer we're working for
      */
-    NGSession(NGSessionPool sessionPool, NGServer server) {
+    NGSession(NGSessionPool sessionPool, NGServer server, Logger logger) {
         super();
+        this.LOG = logger;
         this.sessionPool = sessionPool;
         this.server = server;
         this.heartbeatTimeoutMillis = server.getHeartbeatTimeout();
@@ -192,7 +193,7 @@ public class NGSession extends Thread {
         Socket socket = nextSocket();
         while (socket != null) {
             LOG.log(Level.FINE, "Client connected");
-            try (NGCommunicator comm = new NGCommunicator(socket, heartbeatTimeoutMillis)) {
+            try (NGCommunicator comm = new NGCommunicator(socket, heartbeatTimeoutMillis, LOG)) {
 
                 CommandContext cmdContext = comm.readCommandContext();
 

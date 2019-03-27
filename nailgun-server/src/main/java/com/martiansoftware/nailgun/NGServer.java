@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  */
 public class NGServer implements Runnable {
 
-    private static final Logger LOG = Logger.getLogger(NGServer.class.getName());
+    private Logger LOG = null;
 
     /**
      * Default size for thread pool
@@ -96,17 +96,17 @@ public class NGServer implements Runnable {
     /**
      * <code>System.out</code> at the time of the NGServer's creation
      */
-    public final PrintStream out = System.out;
+    public PrintStream out;
 
     /**
      * <code>System.err</code> at the time of the NGServer's creation
      */
-    public final PrintStream err = System.err;
+    public PrintStream err;
 
     /**
      * <code>System.in</code> at the time of the NGServer's creation
      */
-    public final InputStream in = System.in;
+    public InputStream in;
 
     /**
      * a collection of all classes executed by this server so far
@@ -133,7 +133,7 @@ public class NGServer implements Runnable {
      * pool
      */
     public NGServer(InetAddress addr, int port, int sessionPoolSize, int timeoutMillis) {
-        this(new NGListeningAddress(addr, port), sessionPoolSize, timeoutMillis);
+        this(new NGListeningAddress(addr, port), sessionPoolSize, timeoutMillis, System.in, System.out, System.err);
     }
 
     /**
@@ -148,7 +148,7 @@ public class NGServer implements Runnable {
      * @param port the port on which to listen.
      */
     public NGServer(InetAddress addr, int port) {
-        this(new NGListeningAddress(addr, port), DEFAULT_SESSIONPOOLSIZE, NGConstants.HEARTBEAT_TIMEOUT_MILLIS);
+        this(new NGListeningAddress(addr, port), DEFAULT_SESSIONPOOLSIZE, NGConstants.HEARTBEAT_TIMEOUT_MILLIS, System.in, System.out, System.err);
     }
 
     /**
@@ -159,7 +159,11 @@ public class NGServer implements Runnable {
      * <code>NGServer</code> and start it.
      */
     public NGServer() {
-        this(new NGListeningAddress(null, NGConstants.DEFAULT_PORT), DEFAULT_SESSIONPOOLSIZE, NGConstants.HEARTBEAT_TIMEOUT_MILLIS);
+        this(new NGListeningAddress(null, NGConstants.DEFAULT_PORT), DEFAULT_SESSIONPOOLSIZE, NGConstants.HEARTBEAT_TIMEOUT_MILLIS, System.in, System.out, System.err);
+    }
+
+    public NGServer(NGListeningAddress listeningAddress, int sessionPoolSize, int timeoutMillis, InputStream in, PrintStream out, PrintStream err) {
+        this(listeningAddress, sessionPoolSize, timeoutMillis, in, out, err, Logger.getLogger(NGServer.class.getName()));
     }
 
     /**
@@ -175,14 +179,18 @@ public class NGServer implements Runnable {
      * @param timeoutMillis timeout in millis to wait for a heartbeat from the client
      * before disconnecting them
      */
-    public NGServer(NGListeningAddress listeningAddress, int sessionPoolSize, int timeoutMillis) {
+    public NGServer(NGListeningAddress listeningAddress, int sessionPoolSize, int timeoutMillis, InputStream in, PrintStream out, PrintStream err, Logger logger) {
         this.listeningAddress = listeningAddress;
+        this.in = in;
+        this.out = out;
+        this.err = err;
+        this.LOG = logger;
 
         aliasManager = new AliasManager();
         allNailStats = new java.util.HashMap();
         // allow a maximum of 10 idle threads.  probably too high a number
         // and definitely should be configurable in the future
-        sessionPool = new NGSessionPool(this, sessionPoolSize);
+        sessionPool = new NGSessionPool(this, sessionPoolSize, LOG);
         heartbeatTimeoutMillis = timeoutMillis;
     }
 
@@ -530,7 +538,7 @@ public class NGServer implements Runnable {
             listeningAddress = new NGListeningAddress(null, NGConstants.DEFAULT_PORT);
         }
 
-        NGServer server = new NGServer(listeningAddress, DEFAULT_SESSIONPOOLSIZE, timeoutMillis);
+        NGServer server = new NGServer(listeningAddress, DEFAULT_SESSIONPOOLSIZE, timeoutMillis, System.in, System.out, System.err);
         Thread t = new Thread(server);
         t.setName("NGServer(" + listeningAddress.toString() + ")");
         t.start();

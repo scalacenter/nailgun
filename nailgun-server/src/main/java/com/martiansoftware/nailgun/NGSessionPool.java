@@ -18,8 +18,13 @@
 
 package com.martiansoftware.nailgun;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +42,7 @@ class NGSessionPool {
   final Set<NGSession> workingPool;
 
   int maxIdleSessions;
+  Logger logger;
 
   /** reference to server we're working for */
   final NGServer server;
@@ -54,7 +60,8 @@ class NGSessionPool {
    * @param server the server to work for
    * @param maxIdleSessions the maximum number of idle threads to allow
    */
-  NGSessionPool(NGServer server, int maxIdleSessions) {
+  NGSessionPool(NGServer server, int maxIdleSessions, Logger logger) {
+    this.logger = logger;
     this.server = server;
     this.maxIdleSessions = Math.max(0, maxIdleSessions);
 
@@ -74,7 +81,7 @@ class NGSessionPool {
       }
       NGSession session = idlePool.poll();
       if (session == null) {
-        session = new NGSession(this, server);
+        session = new NGSession(this, server, logger);
         session.start();
       }
       workingPool.add(session);
