@@ -19,7 +19,6 @@ package com.martiansoftware.nailgun;
 
 import com.martiansoftware.nailgun.builtins.DefaultNail;
 import com.sun.jna.Platform;
-
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
@@ -30,8 +29,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Listens for new connections from NailGun clients and launches NGSession
@@ -45,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class NGServer implements Runnable {
 
-    private Logger LOG = null;
+    private Logger LOG;
 
     /**
      * Default size for thread pool
@@ -163,7 +162,7 @@ public class NGServer implements Runnable {
     }
 
     public NGServer(NGListeningAddress listeningAddress, int sessionPoolSize, int timeoutMillis, InputStream in, PrintStream out, PrintStream err) {
-        this(listeningAddress, sessionPoolSize, timeoutMillis, in, out, err, Logger.getLogger(NGServer.class.getName()));
+        this(listeningAddress, sessionPoolSize, timeoutMillis, in, out, err, LoggerFactory.getLogger(NGServer.class.getName()));
     }
 
     /**
@@ -339,7 +338,7 @@ public class NGServer implements Runnable {
         try {
             serversocket.close();
         } catch (Throwable ex) {
-            LOG.log(Level.WARNING, "Exception closing server socket on Nailgun server shutdown", ex);
+            LOG.warn("Exception closing server socket on Nailgun server shutdown", ex);
         }
 
         // close all idle sessions and wait for all running sessions to complete
@@ -347,7 +346,7 @@ public class NGServer implements Runnable {
             sessionPool.shutdown();
         } catch (Throwable ex) {
             // we are going to die anyways so let's just continue
-            LOG.log(Level.WARNING, "Exception shutting down Nailgun server", ex);
+            LOG.warn("Exception shutting down Nailgun server", ex);
         }
 
         // restore system streams

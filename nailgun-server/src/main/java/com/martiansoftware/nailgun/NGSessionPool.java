@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
 
 /**
  * Provides NGSession pooling functionality. One parameter, "maxIdle", governs its behavior by

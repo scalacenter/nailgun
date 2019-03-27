@@ -24,8 +24,7 @@ import java.lang.reflect.Method;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 /**
  * Reads the NailGun stream from the client through the command, then hands off processing to the
@@ -189,10 +188,10 @@ public class NGSession extends Thread {
 
         updateThreadName(null);
 
-        LOG.log(Level.FINE, "Waiting for first client to connect");
+        LOG.debug("Waiting for first client to connect");
         Socket socket = nextSocket();
         while (socket != null) {
-            LOG.log(Level.FINE, "Client connected");
+            LOG.debug("Client connected");
             try (NGCommunicator comm = new NGCommunicator(socket, heartbeatTimeoutMillis, LOG)) {
 
                 CommandContext cmdContext = comm.readCommandContext();
@@ -295,18 +294,17 @@ public class NGSession extends Thread {
 
                     } catch (NGExitException exitEx) {
                         // We got here if nail called System.exit(). Just quit with provided exit code.
-                        LOG.log(Level.INFO, "Nail cleanly exited with status {0}",
+                        LOG.info("Nail cleanly exited with status {0}",
                             exitEx.getStatus());
                         comm.exit(exitEx.getStatus());
                     } catch (Throwable t) {
-                        LOG.log(Level.INFO, "Nail raised unhandled exception",
-                            t);
+                        LOG.info("Nail raised unhandled exception", t);
                         comm.exit(NGConstants.EXIT_EXCEPTION); // remote exception constant
                     }
                 }
 
             } catch (Throwable t) {
-                LOG.log(Level.WARNING, "Internal error in session", t);
+                LOG.warn("Internal error in session", t);
                 t.printStackTrace();
             }
 
@@ -317,18 +315,18 @@ public class NGSession extends Thread {
             updateThreadName(null);
             sessionPool.give(this);
 
-            LOG.log(Level.FINE, "Closing client socket");
+            LOG.debug("Closing client socket");
             try {
                 socket.close();
             } catch (Throwable t) {
-                LOG.log(Level.WARNING, "Internal error closing socket", t);
+                LOG.warn("Internal error closing socket", t);
             }
 
-            LOG.log(Level.FINE, "Waiting for next client to connect");
+            LOG.debug("Waiting for next client to connect");
             socket = nextSocket();
         }
 
-        LOG.log(Level.INFO, "NGSession shutting down");
+        LOG.info("NGSession shutting down");
     }
 
     /**

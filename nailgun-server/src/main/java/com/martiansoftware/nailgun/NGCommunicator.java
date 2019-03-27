@@ -16,15 +16,31 @@
 
 package com.martiansoftware.nailgun;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 /**
  * Once initial handshaking is complete, handles all reads and writes to the socket with the client
@@ -181,7 +197,7 @@ public class NGCommunicator implements Closeable {
         orchestratorExecutor.submit(() -> {
             NGClientDisconnectReason reason = NGClientDisconnectReason.INTERNAL_ERROR;
             try {
-                LOG.log(Level.FINE, "Orchestrator thread started");
+                LOG.debug("Orchestrator thread started");
                 while (true) {
                     Future<Byte> readFuture;
                     synchronized (orchestratorEvent) {
@@ -204,36 +220,30 @@ public class NGCommunicator implements Closeable {
                     }
                 }
             } catch (InterruptedException e) {
-                LOG.log(Level.WARNING, "NGCommunicator orchestrator was interrupted", e);
+                LOG.debug("NGCommunicator orchestrator was interrupted", e);
             } catch (ExecutionException e) {
                 Throwable cause = getCause(e);
                 if (cause instanceof EOFException) {
                     // DataInputStream throws EOFException if stream is terminated
                     // just do nothing and exit main orchestrator thread loop
-                    LOG.log(Level.FINE, "Socket is disconnected");
+                    LOG.debug("Socket is disconnected");
                     reason = NGClientDisconnectReason.SOCKET_ERROR;
                 } else if (cause instanceof SocketTimeoutException) {
                     reason = NGClientDisconnectReason.SOCKET_TIMEOUT;
-                    LOG.log(Level.WARNING,
-                        "Nailgun client socket timed out after " + heartbeatTimeoutMillis
+                    LOG.warn( "Nailgun client socket timed out after " + heartbeatTimeoutMillis
                             + " ms",
                         cause);
                 } else {
-                    LOG.log(Level.WARNING, "Nailgun client read future raised an exception",
-                        cause);
+                    LOG.warn("Nailgun client read future raised an exception", cause);
                 }
             } catch (TimeoutException e) {
                 reason = NGClientDisconnectReason.HEARTBEAT;
-                LOG.log(Level.WARNING,
-                    "Nailgun client read future timed out after " + futureTimeout + " ms",
-                    e);
+                LOG.warn( "Nailgun client read future timed out after " + futureTimeout + " ms", e);
             } catch (Throwable e) {
-                LOG.log(Level.WARNING,
-                    "Nailgun orchestrator gets an exception ",
-                    e);
+                LOG.warn( "Nailgun orchestrator gets an exception ", e);
             }
 
-            LOG.log(Level.FINE, "Nailgun client disconnected");
+            LOG.debug("Nailgun client disconnected");
 
             // set client disconnected flag
             clientConnected.set(false);
@@ -246,7 +256,7 @@ public class NGCommunicator implements Closeable {
             // attached after disconnect had really happened
             waitTerminationAndNotifyClients(reason);
 
-            LOG.log(Level.FINE, "Orchestrator thread finished");
+            LOG.debug("Orchestrator thread finished");
         });
     }
 
@@ -315,7 +325,7 @@ public class NGCommunicator implements Closeable {
         try {
             stopIn();
         } catch(IOException ex) {
-            LOG.log(Level.WARNING, "Unable to close socket for reading while sending final exit code", ex);
+            LOG.warn("Unable to close socket for reading while sending final exit code", ex);
         }
 
         // send the command - client will exit
@@ -328,7 +338,7 @@ public class NGCommunicator implements Closeable {
         try {
             stopOut();
         } catch(IOException ex) {
-            LOG.log(Level.WARNING, "Unable to close socket for writing while sending final exit code", ex);
+            LOG.warn("Unable to close socket for writing while sending final exit code", ex);
         }
     }
 
@@ -341,7 +351,7 @@ public class NGCommunicator implements Closeable {
         }
         inClosed = true;
 
-        LOG.log(Level.FINE, "Shutting down socket for input");
+        LOG.debug("Shutting down socket for input");
 
         // unblock all waiting readers
         setEof();
@@ -367,7 +377,7 @@ public class NGCommunicator implements Closeable {
         }
         outClosed = true;
         
-        LOG.log(Level.FINE, "Shutting down socket for output");
+        LOG.debug("Shutting down socket for output");
 
         // close socket for output - that will initiate normal socket close procedure; in case of TCP socket this is
         // a buffer flush and TCP termination
@@ -398,7 +408,7 @@ public class NGCommunicator implements Closeable {
     }
 
     private void terminateExecutor(ExecutorService service, String which) {
-        LOG.log(Level.FINE, "Shutting down {0} ExecutorService", which);
+        LOG.debug("Shutting down {0} ExecutorService", which);
         service.shutdown();
 
         boolean terminated;
@@ -409,8 +419,7 @@ public class NGCommunicator implements Closeable {
             // It can happen if a thread calling close() is already interrupted
             // do not do anything here but do hard shutdown later with shutdownNow()
             // It is calling thread's responsibility to not be in interrupted state
-            LOG.log(Level.WARNING,
-                "Interruption is signaled in close(), terminating a thread forcefully");
+            LOG.debug( "Interruption is signaled in close(), terminating a thread forcefully");
             service.shutdownNow();
             return;
         }
@@ -418,7 +427,7 @@ public class NGCommunicator implements Closeable {
         if (!terminated) {
             // something went wrong, executor task did not receive a signal and did not complete on time
             // shot executor in the head then
-            LOG.log(Level.WARNING,
+            LOG.debug(
                 "{0} thread did not unblock on a signal within timeout and will be"
                     + " forcefully terminated",
                 which);
@@ -486,22 +495,22 @@ public class NGCommunicator implements Closeable {
 
         switch (chunkType) {
             case NGConstants.CHUNKTYPE_STDIN:
-                LOG.log(Level.FINEST, "Got stdin chunk, len {0}", chunkLen);
+                LOG.debug("Got stdin chunk, len {0}", chunkLen);
                 InputStream chunkStream = readPayload(in, chunkLen);
                 setInput(chunkStream, chunkLen);
                 break;
 
             case NGConstants.CHUNKTYPE_STDIN_EOF:
-                LOG.log(Level.FINEST, "Got stdin closed chunk");
+                LOG.debug("Got stdin closed chunk");
                 setEof();
                 break;
 
             case NGConstants.CHUNKTYPE_HEARTBEAT:
-                LOG.log(Level.FINEST, "Got client heartbeat");
+                LOG.debug("Got client heartbeat");
                 break;
 
             default:
-                LOG.log(Level.WARNING, "Unknown chunk type: {0}", (char) chunkType);
+                LOG.debug("Unknown chunk type: {0}", (char) chunkType);
                 throw new IOException("Unknown stream type: " + (char) chunkType);
         }
         return chunkType;
