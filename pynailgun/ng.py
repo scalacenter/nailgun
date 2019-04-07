@@ -1027,14 +1027,21 @@ def main():
         cmd_args = args
 
     if cmd == "server":
+        nailgun_port = options.nailgun_port
         try:
+            # Pick user-defined nailgun port after `server`
+            for arg in cmd_args:
+              if not arg.startswith("-"):
+                nailgun_port = int(arg)
+                break
+
             with NailgunConnection(
-                options.nailgun_server, server_port=options.nailgun_port
+                options.nailgun_server, server_port=nailgun_port
             ) as c:
                 print("Check if server is alive or not...")
                 exit_code = c.send_command("about", filearg=options.nailgun_filearg)
                 print("-------------------------------------------------------------------")
-                print("A bloop server is already running in port " + str(default_nailgun_port) + ".")
+                print("A bloop server is already running in port " + str(nailgun_port) + ".")
                 print("")
                 print("  - Do you want to spawn a bloop server in another port?")
                 print("      Run `bloop server $NAILGUN_PORT`.")
@@ -1044,7 +1051,7 @@ def main():
                 print("Questions? Reach us at https://gitter.im/scalacenter/bloop")
                 sys.exit(exit_code)
         except NailgunException as e:
-            print("There is no server running at port " + str(default_nailgun_port))
+            print("There is no server running at port " + str(nailgun_port))
             print("Starting the bloop server... this may take a few seconds")
             basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
             server_location = os.path.join(basedir, "blp-server")
