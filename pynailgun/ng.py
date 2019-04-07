@@ -1031,9 +1031,15 @@ def main():
         try:
             # Pick user-defined nailgun port after `server`
             for arg in cmd_args:
-              if not arg.startswith("-"):
-                nailgun_port = int(arg)
-                break
+                if not arg.startswith("-"):
+                  try:
+                    nailgun_port = int(arg)
+                    break
+                  except ValueError:
+                    print("Argument after `bloop server` is not a port " + str(arg) + ".")
+
+            if nailgun_port == options.nailgun_port:
+                print("Defaulting on nailgun port " + str(nailgun_port))
 
             with NailgunConnection(
                 options.nailgun_server, server_port=nailgun_port
