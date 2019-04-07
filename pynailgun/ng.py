@@ -1076,38 +1076,41 @@ def main():
                 with open(jvmopts_file, "r") as jvmopts:
                     lines = jvmopts.read().splitlines()
                     for line in lines:
-                        jvm_options_from_file.append(line)
+                        if line.startswith("-J"):
+                          jvm_options_from_file.append(line)
+                        else:
+                          jvm_options_from_file.append("-J" + line)
 
             try:
-                jvm_options = jvm_options_from_file
+                jvm_options_no_prefix = []
                 server_args = []
+                for jvm_arg in jvm_options_from_file:
+                    if jvm_arg.startswith("-J"):
+                        # Remove prefix -J from argument
+                        jvm_options_no_prefix.append(jvm_arg[2:])
+
                 for arg in cmd_args:
                     if arg.startswith("-J"):
-                        jvm_options.append(arg)
+                        # Remove prefix -J from argument
+                        jvm_options_no_prefix.append(arg[2:])
                     else:
                         server_args.append(arg)
 
                 # Works in Windows and installations that have a jar instead of a script
                 print("Running " + server_location + " as a jar...")
-                java_cmd = ["java"] + jvm_options + ["-jar", server_location] + server_args
+                java_cmd = ["java"] + jvm_options_no_prefix + ["-jar", server_location] + server_args
                 print("Shelling out with '" + str(java_cmd) + "' ...")
                 check_call(java_cmd)
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
                 try:
-                    # Pass the full cmd_args to the script
-                    script_args = []
-                    for jvm_option_from_file in jvm_options_from_file:
-                        script_args.append("-J" + jvm_option_from_file)
-                    script_args = script_args + cmd_args
-
                     print("Running " + server_location + " as a script...")
                     if platform.system() == "Windows":
-                        cmd = ["cmd.exe", "/C", server_location] + script_args
+                        cmd = ["cmd.exe", "/C", server_location] + cmd_args
                         print("Shelling out in Windows with " + str(cmd))
                         check_call(cmd)
                     else:
-                        cmd = ["sh", server_location] + script_args
+                        cmd = ["sh", server_location] + cmd_args
                         print("Shelling out in Unix system with " + str(cmd))
                         check_call(cmd)
                 except CalledProcessError as e2:
