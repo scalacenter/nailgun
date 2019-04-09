@@ -1104,13 +1104,14 @@ def main():
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
                 try:
+                    jvm_options_with_prefix = [ "-J" + opt for opt in jvm_options_no_prefix ]
                     print("Running " + server_location + " as a script...")
                     if platform.system() == "Windows":
-                        cmd = ["cmd.exe", "/C", server_location] + cmd_args
+                        cmd = ["cmd.exe", "/C", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Windows with " + str(cmd))
                         check_call(cmd)
                     else:
-                        cmd = ["sh", server_location] + cmd_args
+                        cmd = ["sh", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Unix system with " + str(cmd))
                         check_call(cmd)
                 except CalledProcessError as e2:
