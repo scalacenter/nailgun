@@ -1168,9 +1168,8 @@ def main():
                 with open(out_file_path, 'r') as f:
                     try:
                         repl_cmd = f.read().split(" ")
-
-                        homedir = os.path.expanduser("~")
-                        coursier_location = os.path.join(homedir, ".bloop", "blp-coursier")
+                        basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+                        coursier_location = os.path.join(basedir, "blp-coursier")
                         if (os.path.isfile(coursier_location)): 
                             repl_cmd[0] = coursier_location
 
