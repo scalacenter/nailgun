@@ -1170,20 +1170,20 @@ def main():
                         repl_cmd = f.read().split(" ")
                         basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
                         coursier_location = os.path.join(basedir, "blp-coursier")
+                        print(coursier_location)
                         if (os.path.isfile(coursier_location)): 
                             repl_cmd[0] = coursier_location
 
                         if platform.system() == "Windows":
                             cmd = ["cmd.exe", "/C"] + repl_cmd
-                            print("Running console in Windows with " + str(cmd))
+                            print("Running console in Windows with " + " ".join(cmd))
                             check_call(cmd)
                         else:
                             cmd = ["sh"] + repl_cmd
-                            print("Running console in Unix system with " + str(cmd))
+                            print("Running console in Unix system with " + " ".join(cmd))
                             check_call(cmd)
                     except CalledProcessError as e:
-                        print("Bloop console failed to run.")
-                        print("Command: %s" % e.cmd)
+                        print("Bloop console failed to run!")
                         print("-> Return code: %d" % e.returncode)
 
 
