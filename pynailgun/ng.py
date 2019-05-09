@@ -1170,7 +1170,6 @@ def main():
                         repl_cmd = f.read().split(" ")
                         basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
                         coursier_location = os.path.join(basedir, "blp-coursier")
-                        print(coursier_location)
                         if (os.path.isfile(coursier_location)): 
                             repl_cmd[0] = coursier_location
 
