@@ -1175,14 +1175,15 @@ def main():
 
                         if platform.system() == "Windows":
                             cmd = ["cmd.exe", "/C"] + repl_cmd
-                            print("Running console in Windows with " + " ".join(cmd))
+                            # print("Running console in Windows with " + " ".join(cmd))
                             check_call(cmd)
                         else:
                             cmd = ["sh"] + repl_cmd
-                            print("Running console in Unix system with " + " ".join(cmd))
+                            # print("Running console in Unix system with " + " ".join(cmd))
                             check_call(cmd)
                     except CalledProcessError as e:
                         print("Bloop console failed to run!")
+                        print("-> Command: %s" % e.cmd)
                         print("-> Return code: %d" % e.returncode)
 
 
