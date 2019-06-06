@@ -1117,7 +1117,7 @@ def main():
                 print("Running " + server_location + " as a jar...")
                 java_cmd = ["java"] + jvm_options_no_prefix + ["-jar", server_location] + server_args
                 print("Shelling out with '" + str(java_cmd) + "' ...")
-                check_call(java_cmd)
+                check_call(java_cmd, shell = True)
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
                 try:
@@ -1126,11 +1126,11 @@ def main():
                     if platform.system() == "Windows":
                         cmd = ["cmd.exe", "/C", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Windows with " + str(cmd))
-                        check_call(cmd)
+                        check_call(cmd, shell = True)
                     else:
                         cmd = ["sh", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Unix system with " + str(cmd))
-                        check_call(cmd)
+                        check_call(cmd, shell = True)
                 except CalledProcessError as e2:
                     print("Bloop server in %s failed to run." % server_location)
                     print("First invocation attempt: %s" % e.cmd)
@@ -1176,11 +1176,11 @@ def main():
                         if platform.system() == "Windows":
                             cmd = ["cmd.exe", "/C"] + repl_cmd
                             # print("Running console in Windows with " + " ".join(cmd))
-                            check_call(cmd)
+                            check_call(cmd, shell = True)
                         else:
                             cmd = ["sh"] + repl_cmd
                             # print("Running console in Unix system with " + " ".join(cmd))
-                            check_call(cmd)
+                            check_call(cmd, shell = True)
                     except CalledProcessError as e:
                         print("Bloop console failed to run!")
                         print("-> Command: %s" % e.cmd)
