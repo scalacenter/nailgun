@@ -20,6 +20,7 @@ import platform
 import optparse
 import os
 import os.path
+import tempfile
 import select
 import socket
 import struct
@@ -1026,6 +1027,22 @@ def main():
         # Pass any remaining command line arguments to the server.
         cmd_args = args
 
+    # The command we need to execute gets written
+    # to the --out-file parameter. If the user
+    # hasn't specified this we hijack it 
+    out_file_temp = tempfile.NamedTemporaryFile()
+    out_file_path = out_file_temp.name
+    if cmd == "console": 
+        try:
+            index = cmd_args.index("--out-file")
+        except: 
+            index = -1
+
+        if index != -1:
+            out_file_path =  cmd_args[index + 1]
+        else :
+            cmd_args = [cmd_args[0], "--out-file", out_file_path] + cmd_args[1:]
+
     if cmd == "server":
         nailgun_port = options.nailgun_port
         try:
@@ -1100,7 +1117,7 @@ def main():
                 print("Running " + server_location + " as a jar...")
                 java_cmd = ["java"] + jvm_options_no_prefix + ["-jar", server_location] + server_args
                 print("Shelling out with '" + str(java_cmd) + "' ...")
-                check_call(java_cmd)
+                check_call(java_cmd, shell = True)
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
                 try:
@@ -1109,11 +1126,11 @@ def main():
                     if platform.system() == "Windows":
                         cmd = ["cmd.exe", "/C", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Windows with " + str(cmd))
-                        check_call(cmd)
+                        check_call(cmd, shell = True)
                     else:
                         cmd = ["sh", server_location] + cmd_args + jvm_options_with_prefix
                         print("Shelling out in Unix system with " + str(cmd))
-                        check_call(cmd)
+                        check_call(cmd, shell = True)
                 except CalledProcessError as e2:
                     print("Bloop server in %s failed to run." % server_location)
                     print("First invocation attempt: %s" % e.cmd)
@@ -1130,10 +1147,45 @@ def main():
         with NailgunConnection(
             options.nailgun_server, server_port=options.nailgun_port
         ) as c:
+            if cmd == "repl": 
+                sys.stderr.write("Did you mean `bloop console`?\n")
+                sys.exit(1)
+
             exit_code = c.send_command(cmd, cmd_args, options.nailgun_filearg)
 
             if cmd == "help":
                 sys.stdout.write("Type `--nailgun-help` for help on the Nailgun CLI tool.\n")
+
+            # the user might have specified a REPL to use
+            # we fallback to ammonite as the default one
+            # if none is specified
+            try:
+                repl_kind_index = cmd_args.index("--repl") + 1
+                repl_kind = cmd_args[repl_kind_index]
+            except: 
+                repl_kind = "ammonite"
+            if cmd == "console" and repl_kind == "ammonite" and exit_code == 0:
+                with open(out_file_path, 'r') as f:
+                    try:
+                        repl_cmd = f.read().split(" ")
+                        basedir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+                        coursier_location = os.path.join(basedir, "blp-coursier")
+                        if (os.path.isfile(coursier_location)): 
+                            repl_cmd[0] = coursier_location
+
+                        if platform.system() == "Windows":
+                            cmd = ["cmd.exe", "/C"] + repl_cmd
+                            # print("Running console in Windows with " + " ".join(cmd))
+                            check_call(cmd, shell = True)
+                        else:
+                            cmd = ["sh"] + repl_cmd
+                            # print("Running console in Unix system with " + " ".join(cmd))
+                            check_call(cmd, shell = True)
+                    except CalledProcessError as e:
+                        print("Bloop console failed to run!")
+                        print("-> Command: %s" % e.cmd)
+                        print("-> Return code: %d" % e.returncode)
+
 
             sys.exit(exit_code)
     except NailgunException as e:
