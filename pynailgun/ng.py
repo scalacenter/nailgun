@@ -1029,19 +1029,19 @@ def main():
 
     # The command we need to execute gets written
     # to the --out-file parameter. If the user
-    # hasn't specified this we hijack it 
+    # hasn't specified this we hijack it
     out_file_temp = tempfile.NamedTemporaryFile()
     out_file_path = out_file_temp.name
-    if cmd == "console": 
+    if cmd == "console":
         try:
             index = cmd_args.index("--out-file")
-        except: 
+        except:
             index = -1
 
         if index != -1:
-            out_file_path =  cmd_args[index + 1]
+            out_file_path = cmd_args[index + 1]
         else :
-            cmd_args = [cmd_args[0], "--out-file", out_file_path] + cmd_args[1:]
+            cmd_args = cmd_args + ["--out-file", out_file_path]
 
     if cmd == "server":
         nailgun_port = options.nailgun_port
