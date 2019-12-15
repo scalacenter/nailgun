@@ -19,6 +19,7 @@ import ctypes
 import platform
 import optparse
 import os
+import time
 import os.path
 import tempfile
 import select
@@ -1114,32 +1115,38 @@ def main():
                         server_args.append(arg)
 
                 # Works in Windows and installations that have a jar instead of a script
+                start = int(round(time.time() * 1000))
                 print("Running " + server_location + " as a jar...")
                 java_cmd = ["java"] + jvm_options_no_prefix + ["-jar", server_location] + server_args
                 print("Shelling out with '" + str(java_cmd) + "' ...")
                 check_call(java_cmd)
             except CalledProcessError as e:
                 # Works in systems such as Mac OS or Nix that in which blp-server is a script
-                try:
-                    jvm_options_with_prefix = [ "-J" + opt for opt in jvm_options_no_prefix ]
-                    print("Running " + server_location + " as a script...")
-                    if platform.system() == "Windows":
-                        cmd = ["cmd.exe", "/C", server_location] + cmd_args + jvm_options_with_prefix
-                        print("Shelling out in Windows with " + str(cmd))
-                        check_call(cmd)
-                    else:
-                        cmd = ["sh", server_location] + cmd_args + jvm_options_with_prefix
-                        print("Shelling out in Unix system with " + str(cmd))
-                        check_call(cmd)
-                except CalledProcessError as e2:
-                    print("Bloop server in %s failed to run." % server_location)
-                    print("First invocation attempt: %s" % e.cmd)
-                    print("-> Return code: %d" % e.returncode)
-                    print("Second invocation attempt: %s" % e2.cmd)
-                    print("-> Return code: %d" % e2.returncode)
+                end = int(round(time.time() * 1000))
+                diff = start - end
+                if diff > 15000:
+                    print("Skipping second attempt, previous command invocation took longer than 15s")
+                else:
+                    try:
+                        jvm_options_with_prefix = [ "-J" + opt for opt in jvm_options_no_prefix ]
+                        print("Running " + server_location + " as a script...")
+                        if platform.system() == "Windows":
+                            cmd = ["cmd.exe", "/C", server_location] + cmd_args + jvm_options_with_prefix
+                            print("Shelling out in Windows with " + str(cmd))
+                            check_call(cmd)
+                        else:
+                            cmd = ["sh", server_location] + cmd_args + jvm_options_with_prefix
+                            print("Shelling out in Unix system with " + str(cmd))
+                            check_call(cmd)
+                    except CalledProcessError as e2:
+                        print("Bloop server in %s failed to run." % server_location)
+                        print("First invocation attempt: %s" % e.cmd)
+                        print("-> Return code: %d" % e.returncode)
+                        print("Second invocation attempt: %s" % e2.cmd)
+                        print("-> Return code: %d" % e2.returncode)
 
-                    # Only use the return code of the first attempt
-                    sys.exit(e.returncode)
+                        # Only use the return code of the first attempt
+                        sys.exit(e.returncode)
             except KeyboardInterrupt as e:
                 sys.exit(0)
 
